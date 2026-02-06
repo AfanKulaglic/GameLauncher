@@ -328,25 +328,7 @@ export function PartnersScreen() {
   );
 
   const renderDiscoverTab = () => (
-    <View style={[styles.tabContent, { gap: vScale(8) }]}>
-      {/* Your UID card */}
-      {user ? (
-        <Card style={[styles.inviteCard, { padding: vScale(12), borderRadius: scale(16), overflow: "hidden" }]}>
-          <View style={styles.inviteTitleRow}>
-            <Icon name="link" size={scale(12)} color={colors.gray700} />
-            <Text style={[styles.inviteTitle, { fontSize: scale(11) }]}>Your Profile ID</Text>
-          </View>
-          <Text style={[styles.inviteSubtitle, { fontSize: scale(8) }]}>
-            Share your ID so friends can find you.
-          </Text>
-          <View style={[styles.uidRow, { marginTop: vScale(8), padding: vScale(6), borderRadius: scale(10) }]}>
-            <Text style={[styles.uidLabel, { fontSize: scale(8) }]}>Your UID</Text>
-            <Text style={[styles.uidValue, { fontSize: scale(9) }]} numberOfLines={1}>
-              {user.id}
-            </Text>
-          </View>
-        </Card>
-      ) : null}
+    <View style={[styles.tabContent, { gap: vScale(8) }]}> 
 
       {/* Search by name */}
       <View style={[styles.searchRow, { borderRadius: scale(14), paddingHorizontal: hScale(10) }]}>

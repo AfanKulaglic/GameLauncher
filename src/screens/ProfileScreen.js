@@ -111,7 +111,6 @@ export function ProfileScreen() {
               <Text style={[styles.handle, { fontSize: scale(10) }]}>{email}</Text>
 
               <View style={[styles.infoList, { marginTop: vScale(10) }]}>
-                <InfoRow label="User ID" value={user.id} scale={scale} />
                 <InfoRow label="Created" value={createdAtLabel} scale={scale} />
               </View>
 
