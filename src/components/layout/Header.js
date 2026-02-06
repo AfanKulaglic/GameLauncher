@@ -92,19 +92,19 @@ export function Header() {
           <View
             style={[
               styles.badge,
-              { width: scale(24), height: scale(24), borderRadius: scale(8) },
+              { width: scale(36), height: scale(36), borderRadius: scale(14) },
             ]}
           >
-            <Icon name="people" size={scale(12)} color={colors.gray700} />
+            <Icon name="people" size={scale(22)} color={colors.gray700} />
           </View>
           <TouchableOpacity
             onPress={() => setShowNotifications(true)}
             style={[
               styles.badge,
-              { width: scale(24), height: scale(24), borderRadius: scale(8) },
+              { width: scale(36), height: scale(36), borderRadius: scale(14) },
             ]}
           >
-            <Icon name="bell" size={scale(12)} color={colors.gray700} />
+            <Icon name="bell" size={scale(22)} color={colors.gray700} />
             {requestCount > 0 ? (
               <View
                 style={[

@@ -34,7 +34,7 @@ export function MainTabs() {
         options={{
           tabBarLabel: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Icon name="joystick" size={size - 2} color={color} />
+            <Icon name="joystick" size={size + 8} color={color} />
           ),
         }}
       />
@@ -44,7 +44,7 @@ export function MainTabs() {
         options={{
           tabBarLabel: "Partners",
           tabBarIcon: ({ color, size }) => (
-            <Icon name="people" size={size - 2} color={color} />
+            <Icon name="people" size={size + 8} color={color} />
           ),
         }}
       />
@@ -54,7 +54,7 @@ export function MainTabs() {
         options={{
           tabBarLabel: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Icon name="user" size={size - 2} color={color} />
+            <Icon name="user" size={size + 8} color={color} />
           ),
         }}
       />
