@@ -2,6 +2,7 @@
   "expo": {
     "name": "game-launcher-native",
     "slug": "game-launcher-native",
+    "scheme": "game-launcher-native",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,6 +25,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID": "",
+      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "",
+      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "",
+      "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": ""
     }
   }
 }

@@ -1,0 +1,18 @@
+export const colors = {
+  brandRed: "#E11D48",
+  brandRedDark: "#BE123C",
+  accentBlue: "#3B82F6",
+  gray50: "#F8FAFC",
+  gray100: "#F1F5F9",
+  gray200: "#E2E8F0",
+  gray300: "#CBD5F5",
+  gray400: "#94A3B8",
+  gray500: "#64748B",
+  gray600: "#475569",
+  gray700: "#334155",
+  gray800: "#1F2937",
+  gray900: "#111827",
+  white: "#FFFFFF",
+  black: "#000000",
+  success: "#10B981",
+};
