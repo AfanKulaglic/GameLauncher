@@ -6,25 +6,37 @@ import { ProfileScreen } from "../screens/ProfileScreen";
 import { Icon } from "../components/ui/Icon";
 import { colors } from "../utils/colors";
 import { useResponsive } from "../utils/useResponsive";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Tab = createBottomTabNavigator();
 
 export function MainTabs() {
   const { scale, vScale } = useResponsive();
+  const insets = useSafeAreaInsets();
+  const tabBarBottomPadding = Math.max(insets.bottom, vScale(8));
+  const tabBarHeight = vScale(52) + tabBarBottomPadding;
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.brandRed,
+        tabBarInactiveTintColor: colors.gray400,
         tabBarStyle: {
-          height: vScale(44),
-          paddingBottom: vScale(6),
+          height: tabBarHeight,
+          paddingBottom: tabBarBottomPadding,
           paddingTop: vScale(6),
+          backgroundColor: colors.white,
+          borderTopWidth: 1,
+          borderTopColor: colors.gray200,
         },
         tabBarLabelStyle: {
           fontSize: scale(9),
           fontWeight: "600",
+          marginBottom: vScale(2),
+        },
+        tabBarIconStyle: {
+          marginTop: vScale(2),
         },
       }}
     >

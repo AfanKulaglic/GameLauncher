@@ -5,11 +5,15 @@ import { Avatar } from "../ui/Avatar";
 import { colors } from "../../utils/colors";
 import { useResponsive } from "../../utils/useResponsive";
 
-export function PartnerCard({ partner }) {
+export function PartnerCard({ partner, score }) {
   const { scale, vScale } = useResponsive();
   const nameSize = scale(10);
   const metaSize = scale(9);
   const isOnline = partner.status === "online" || partner.status === "in-game";
+  const wins = score?.wins ?? 0;
+  const losses = score?.losses ?? 0;
+  const scoreColor =
+    wins > losses ? "#22C55E" : losses > wins ? "#EF4444" : colors.gray500;
 
   return (
     <Card style={[styles.card, { padding: vScale(6), gap: vScale(3) }]}>
@@ -31,8 +35,8 @@ export function PartnerCard({ partner }) {
               ]}
             />
           </View>
-          <Text style={[styles.meta, { fontSize: metaSize }]} numberOfLines={1}>
-            {partner.status === "in-game" ? "In game" : isOnline ? "Online" : "Offline"}
+          <Text style={[styles.meta, { fontSize: metaSize, color: scoreColor }]} numberOfLines={1}>
+            {`${wins}-${losses}`}
           </Text>
         </View>
       </View>

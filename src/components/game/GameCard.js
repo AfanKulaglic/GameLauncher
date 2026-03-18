@@ -5,20 +5,33 @@ import { Icon } from "../ui/Icon";
 import { colors } from "../../utils/colors";
 import { useResponsive } from "../../utils/useResponsive";
 
-export function GameCard({ game, onPress, focused = false, cardWidth = 200, imageHeight = 260 }) {
+export function GameCard({
+  game,
+  onPress,
+  focused = false,
+  cardWidth = 200,
+  imageHeight = 260,
+  isLastPlayed = false,
+  hasLastPlayed = false,
+}) {
   const { scale, vScale } = useResponsive();
   const baseFont = scale(10);
   const smallFont = scale(9);
+  const badgeFont = scale(13);
+  const badgeIcon = scale(11);
+
+  const showActivityBadge = isLastPlayed || (!hasLastPlayed && game.status === "playing");
+  const activityText = isLastPlayed ? "Played last time" : "Playing";
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
       <Card style={[styles.card, { width: cardWidth }, focused ? styles.focusedCard : null]}>
         <View style={[styles.imageWrap, { height: imageHeight }]}>
           <Image source={game.coverImage} style={styles.image} resizeMode="cover" />
-          {game.status === "playing" ? (
+          {showActivityBadge ? (
             <View style={[styles.playing, { paddingVertical: vScale(5) }]}>
-              <Icon name="play" size={smallFont} color={colors.white} />
-              <Text style={[styles.playingText, { fontSize: smallFont }]}>Playing</Text>
+              <Icon name="play" size={badgeIcon} color={colors.white} />
+              <Text style={[styles.playingText, { fontSize: badgeFont }]}>{activityText}</Text>
             </View>
           ) : null}
           {game.status === "completed" ? (
@@ -93,8 +106,8 @@ const styles = StyleSheet.create({
   },
   playingText: {
     color: colors.white,
-    fontWeight: "700",
-    fontSize: 10,
+    fontWeight: "800",
+    fontSize: 13,
   },
   completed: {
     position: "absolute",

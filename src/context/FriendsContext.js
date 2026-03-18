@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { AppState } from "react-native";
@@ -81,7 +82,8 @@ export function FriendsProvider({ children }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [gameInvites, setGameInvites] = useState([]); // incoming game invites
-  const [activeLobby, setActiveLobby] = useState(null); // { lobbyId, gameId, gameTitle, gameCover, hostId, hostName, players: { uid: { name, avatar, status } } }
+  const [activeLobby, setActiveLobby] = useState(null);
+  const [matchHistory, setMatchHistory] = useState([]); // { lobbyId, gameId, gameTitle, gameCover, hostId, hostName, players: { uid: { name, avatar, status } } }
 
   // ─── Register user profile in RTDB ───
   const registerUserProfile = useCallback(
@@ -107,26 +109,37 @@ export function FriendsProvider({ children }) {
   );
 
   // ─── Presence management ───
+  const lastPresenceRef = useRef(null); // tracks last written value to avoid redundant writes
+
   useEffect(() => {
     if (!user?.id) return;
 
     const presRef = ref(db, `presence/${user.id}`);
+    const connectedRef = ref(db, ".info/connected");
 
-    // Set online
-    set(presRef, { online: true, lastSeen: serverTimestamp() });
+    const writePresence = (online) => {
+      if (lastPresenceRef.current === online) return; // skip redundant write
+      lastPresenceRef.current = online;
+      set(presRef, { online }).catch(() => {});
+    };
 
-    // Set offline on disconnect
-    onDisconnect(presRef).set({
-      online: false,
-      lastSeen: serverTimestamp(),
+    // Listen to Firebase connection state — re-register onDisconnect on every reconnect
+    const unsubConnected = onValue(connectedRef, (snap) => {
+      if (snap.val() === true) {
+        onDisconnect(presRef).set({ online: false }).catch(() => {});
+        // Only set online if app is in foreground
+        if (AppState.currentState === "active") {
+          writePresence(true);
+        }
+      }
     });
 
     // Handle app state changes (background/foreground)
     const handleAppState = (state) => {
       if (state === "active") {
-        set(presRef, { online: true, lastSeen: serverTimestamp() });
+        writePresence(true);
       } else {
-        set(presRef, { online: false, lastSeen: serverTimestamp() });
+        writePresence(false);
       }
     };
 
@@ -134,7 +147,9 @@ export function FriendsProvider({ children }) {
 
     return () => {
       sub.remove();
-      set(presRef, { online: false, lastSeen: serverTimestamp() });
+      unsubConnected();
+      lastPresenceRef.current = null;
+      set(presRef, { online: false }).catch(() => {});
     };
   }, [user?.id]);
 
@@ -239,6 +254,24 @@ export function FriendsProvider({ children }) {
     return () => unsub();
   }, [user?.id]);
 
+  // ─── Listen to match history ───
+  useEffect(() => {
+    if (!user?.id) return;
+    const histRef = ref(db, `matchHistory/${user.id}`);
+    const unsub = onValue(histRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        setMatchHistory([]);
+        return;
+      }
+      const list = Object.entries(data)
+        .map(([id, val]) => ({ id, ...val }))
+        .sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0));
+      setMatchHistory(list);
+    });
+    return () => unsub();
+  }, [user?.id]);
+
   // ─── Listen to active lobby ───
   useEffect(() => {
     if (!activeLobby?.lobbyId) return;
@@ -258,12 +291,37 @@ export function FriendsProvider({ children }) {
   }, [activeLobby?.lobbyId]);
 
   // ─── Send game invite ───
+  // Accepts either:
+  //   sendGameInvite(partnersArray, game)           — new multi-player API
+  //   sendGameInvite(targetUid, targetProfile, game) — legacy 2-player API
   const sendGameInvite = useCallback(
-    async (targetUid, targetProfile, game) => {
-      if (!user?.id || !targetUid || !game) return null;
+    async (firstArg, secondArg, thirdArg) => {
+      // Normalise arguments
+      let targets; // [{ id, displayName, avatar }]
+      let game;
+      if (Array.isArray(firstArg)) {
+        targets = firstArg;
+        game = secondArg;
+      } else {
+        // Legacy: (uid, profile, game)
+        targets = [{ id: firstArg, displayName: secondArg?.displayName, avatar: secondArg?.avatar }];
+        game = thirdArg;
+      }
+
+      if (!user?.id || targets.length === 0 || !game) return null;
 
       // Create a lobby
-      const lobbyId = `${user.id}_${targetUid}_${Date.now()}`;
+      const lobbyId = `${user.id}_${targets[0].id}_${Date.now()}`;
+      const invited = {};
+      for (const t of targets) {
+        invited[t.id] = {
+          name: t.displayName || "Player",
+          avatar: t.avatar || "",
+          status: "pending",
+          invitedAt: serverTimestamp(),
+        };
+      }
+
       const lobbyData = {
         lobbyId,
         gameId: game.id,
@@ -279,32 +337,27 @@ export function FriendsProvider({ children }) {
             joinedAt: serverTimestamp(),
           },
         },
-        invited: {
-          [targetUid]: {
-            name: targetProfile?.displayName || "Player",
-            avatar: targetProfile?.avatar || "",
-            status: "pending",
-            invitedAt: serverTimestamp(),
-          },
-        },
+        invited,
       };
 
       // Write lobby
       await set(ref(db, `gameLobbies/${lobbyId}`), lobbyData);
 
-      // Send invite notification to target
-      const invRef = ref(db, `gameInvites/${targetUid}`);
-      const newInv = push(invRef);
-      await set(newInv, {
-        type: "game_invite",
-        lobbyId,
-        gameId: game.id,
-        gameTitle: game.title,
-        from: user.id,
-        fromName: user.displayName || "Player",
-        fromAvatar: `https://api.dicebear.com/7.x/avataaars/png?seed=${user.id}`,
-        timestamp: serverTimestamp(),
-      });
+      // Send invite notification to each target
+      for (const t of targets) {
+        const invRef = ref(db, `gameInvites/${t.id}`);
+        const newInv = push(invRef);
+        await set(newInv, {
+          type: "game_invite",
+          lobbyId,
+          gameId: game.id,
+          gameTitle: game.title,
+          from: user.id,
+          fromName: user.displayName || "Player",
+          fromAvatar: `https://api.dicebear.com/7.x/avataaars/png?seed=${user.id}`,
+          timestamp: serverTimestamp(),
+        });
+      }
 
       // Set this as active lobby for the sender
       setActiveLobby(lobbyData);
@@ -630,6 +683,7 @@ export function FriendsProvider({ children }) {
       getFriendStatus,
       registerUserProfile,
       gameInvites,
+      matchHistory,
       activeLobby,
       sendGameInvite,
       acceptGameInvite,
@@ -656,6 +710,7 @@ export function FriendsProvider({ children }) {
       getFriendStatus,
       registerUserProfile,
       gameInvites,
+      matchHistory,
       activeLobby,
       sendGameInvite,
       acceptGameInvite,

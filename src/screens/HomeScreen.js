@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   ImageBackground,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PageContainer } from "../components/layout/PageContainer";
 import { Header } from "../components/layout/Header";
@@ -18,11 +18,14 @@ import { mockGames } from "../data/mockData";
 import { colors } from "../utils/colors";
 import { useResponsive } from "../utils/useResponsive";
 import { useFriends } from "../context/FriendsContext";
+import { useAuth } from "../context/AuthContext";
 
 export function HomeScreen() {
   const navigation = useNavigation();
+  const isFocusedScreen = useIsFocused();
   const insets = useSafeAreaInsets();
   const { scale, hScale, vScale, height } = useResponsive();
+  const { user } = useAuth();
   const friendsCtx = useFriends();
   const horizontalPadding = hScale(6);
   const partnerItemWidth = hScale(110);
@@ -33,8 +36,10 @@ export function HomeScreen() {
   const [selectedGame, setSelectedGame] = useState(null);
   const [focusedGame, setFocusedGame] = useState(mockGames[0]);
 
-  const featuredGames = mockGames.slice(0, 5);
+  const featuredGames = useMemo(() => mockGames.slice(0, 5), []);
   const friendsList = friendsCtx?.friends || [];
+  const matchHistory = friendsCtx?.matchHistory || [];
+  const lastPlayedGameId = matchHistory[0]?.gameId || null;
   const partnersToDisplay = useMemo(() => {
     const sorted = [...friendsList].sort((a, b) => {
       const order = { online: 0, "in-game": 1, offline: 2 };
@@ -42,6 +47,33 @@ export function HomeScreen() {
     });
     return sorted.slice(0, 3);
   }, [friendsList]);
+
+  const partnerScoreMap = useMemo(() => {
+    const map = {};
+    if (!focusedGame?.id || !user?.id) return map;
+
+    const gameMatches = matchHistory.filter((m) => m.gameId === focusedGame.id);
+
+    friendsList.forEach((friend) => {
+      const vsMatches = gameMatches.filter(
+        (m) => m.players?.[user.id] && m.players?.[friend.id]
+      );
+      const myWins = vsMatches.filter((m) => m.winnerId === user.id).length;
+      const myLosses = vsMatches.filter((m) => m.winnerId === friend.id).length;
+
+      map[friend.id] = { wins: myWins, losses: myLosses };
+    });
+
+    return map;
+  }, [focusedGame?.id, friendsList, matchHistory, user?.id]);
+
+  useEffect(() => {
+    if (!lastPlayedGameId) return;
+    const match = featuredGames.find((g) => g.id === lastPlayedGameId);
+    if (match && focusedGame?.id !== match.id) {
+      setFocusedGame(match);
+    }
+  }, [lastPlayedGameId, featuredGames, focusedGame?.id]);
 
   return (
     <PageContainer>
@@ -81,7 +113,10 @@ export function HomeScreen() {
             ]}
             renderItem={({ item }) => (
               <View style={[styles.partnerItem, { width: partnerItemWidth }]}>
-                <PartnerCard partner={item} />
+                <PartnerCard
+                  partner={item}
+                  score={partnerScoreMap[item.id] || { wins: 0, losses: 0 }}
+                />
               </View>
             )}
             ListEmptyComponent={
@@ -100,6 +135,9 @@ export function HomeScreen() {
             games={featuredGames}
             onSelect={setSelectedGame}
             onFocus={setFocusedGame}
+            initialGameId={lastPlayedGameId}
+            lastPlayedGameId={lastPlayedGameId}
+            isHomeFocused={isFocusedScreen}
             cardWidth={cardWidth}
           />
         </View>

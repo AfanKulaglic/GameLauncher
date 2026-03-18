@@ -4,6 +4,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthStack } from "./AuthStack";
 import { MainTabs } from "./MainTabs";
 import { GameLobbyScreen } from "../screens/GameLobbyScreen";
+import { BattleshipScreen } from "../screens/BattleshipScreen";
+import { LudoScreen } from "../screens/LudoScreen";
+import { SlagalicaScreen } from "../screens/SlagalicaScreen";
 import { useAuth } from "../context/AuthContext";
 
 const Stack = createNativeStackNavigator();
@@ -15,6 +18,21 @@ function MainStack() {
       <Stack.Screen
         name="GameLobby"
         component={GameLobbyScreen}
+        options={{ animation: "slide_from_bottom" }}
+      />
+      <Stack.Screen
+        name="Battleship"
+        component={BattleshipScreen}
+        options={{ animation: "slide_from_bottom" }}
+      />
+      <Stack.Screen
+        name="Ludo"
+        component={LudoScreen}
+        options={{ animation: "slide_from_bottom" }}
+      />
+      <Stack.Screen
+        name="Slagalica"
+        component={SlagalicaScreen}
         options={{ animation: "slide_from_bottom" }}
       />
     </Stack.Navigator>

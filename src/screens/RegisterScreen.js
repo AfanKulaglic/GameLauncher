@@ -17,6 +17,16 @@ import { useResponsive } from "../utils/useResponsive";
 
 const background = require("../../assets/games/battleship.jpg");
 
+function toReadableAuthError(err) {
+  switch (err?.code) {
+    case "auth/email-already-in-use": return "This email is already registered.";
+    case "auth/invalid-email": return "Invalid email address.";
+    case "auth/weak-password": return "Password should be at least 6 characters.";
+    case "custom/display-name-taken": return err.message;
+    default: return err?.message || "An unknown error occurred.";
+  }
+}
+
 export function RegisterScreen({ navigation }) {
   const { scale, vScale, hScale } = useResponsive();
   const insets = useSafeAreaInsets();
@@ -33,7 +43,7 @@ export function RegisterScreen({ navigation }) {
     try {
       await register({ displayName, email, password });
     } catch (err) {
-      setError("Unable to create account. Please check your details.");
+      setError(toReadableAuthError(err));
     } finally {
       setLoading(false);
     }

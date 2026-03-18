@@ -141,6 +141,21 @@ export function Icon({ name, size = 24, color = "#64748B", strokeWidth = 2 }) {
           <Path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" />
         </Svg>
       );
+    case "pause":
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M8 5v14" stroke={stroke} strokeWidth={strokeWidth + 0.5} strokeLinecap="round" />
+          <Path d="M16 5v14" stroke={stroke} strokeWidth={strokeWidth + 0.5} strokeLinecap="round" />
+        </Svg>
+      );
+    case "info":
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="12" r="9" stroke={stroke} strokeWidth={strokeWidth} />
+          <Path d="M12 16v-4" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" />
+          <Circle cx="12" cy="8" r="0.5" fill={stroke} stroke={stroke} strokeWidth={strokeWidth * 0.5} />
+        </Svg>
+      );
     default:
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

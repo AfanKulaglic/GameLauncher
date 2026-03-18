@@ -4,13 +4,14 @@ import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { auth, db } from "../lib/firebase";
-import { ref, set, get, serverTimestamp } from "firebase/database";
+import { ref, set, get, serverTimestamp, query, orderByChild, equalTo } from "firebase/database";
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithCredential,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
 } from "firebase/auth";
@@ -38,13 +39,23 @@ async function syncUserToFirebase(userData) {
       createdAt: existingData?.createdAt || serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-
-    // Set online presence
-    const presRef = ref(db, `presence/${userData.id}`);
-    await set(presRef, { online: true, lastSeen: serverTimestamp() });
   } catch (e) {
     console.warn("Firebase sync error:", e);
   }
+}
+
+// Check if a display name is already in use by another user
+async function isDisplayNameTaken(name, excludeUid = null) {
+  if (!name?.trim()) return false;
+  const q = query(
+    ref(db, "users"),
+    orderByChild("displayNameLower"),
+    equalTo(name.trim().toLowerCase())
+  );
+  const snapshot = await get(q);
+  if (!snapshot.exists()) return false;
+  const matches = snapshot.val();
+  return Object.keys(matches).some((uid) => uid !== excludeUid);
 }
 
 export function AuthProvider({ children }) {
@@ -71,7 +82,7 @@ export function AuthProvider({ children }) {
     web: googleConfig.webClientId,
     default: googleConfig.expoClientId,
   });
-  const googleEnabled = Boolean(platformClientId);
+  const googleEnabled = Platform.OS === "web" || Boolean(platformClientId);
 
   const [request, response, promptAsync] = Google.useAuthRequest(googleConfig);
 
@@ -121,6 +132,13 @@ export function AuthProvider({ children }) {
   }, [response]);
 
   const register = async ({ displayName, email, password }) => {
+    const nameTaken = await isDisplayNameTaken(displayName);
+    if (nameTaken) {
+      const err = new Error("This display name is already taken.");
+      err.code = "custom/display-name-taken";
+      throw err;
+    }
+
     const created = await createUserWithEmailAndPassword(auth, email, password);
     if (displayName?.trim()) {
       await updateProfile(created.user, { displayName: displayName.trim() });
@@ -149,23 +167,25 @@ export function AuthProvider({ children }) {
   };
 
   const loginWithGoogle = async () => {
-    if (!request || !googleEnabled) {
-      throw new Error("Google sign-in is not configured for this platform.");
+    if (Platform.OS === "web") {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") {
+          return; // user cancelled
+        }
+        throw e;
+      }
+    } else {
+      if (!request || !googleEnabled) {
+        throw new Error("Google sign-in is not configured for this platform.");
+      }
+      await promptAsync();
     }
-    await promptAsync();
   };
 
   const logout = async () => {
-    // Set offline presence
-    if (user?.id) {
-      try {
-        const presRef = ref(db, `presence/${user.id}`);
-        await set(presRef, { online: false, lastSeen: serverTimestamp() });
-      } catch (e) {
-        console.warn("Presence update error:", e);
-      }
-    }
-
     try {
       await signOut(auth);
     } catch (e) {

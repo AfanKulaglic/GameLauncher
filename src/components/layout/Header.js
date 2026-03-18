@@ -148,7 +148,7 @@ export function Header() {
                     borderRadius: scale(16),
                     padding: vScale(12),
                     maxHeight: vScale(350),
-                    width: hScale(280),
+                    width: "100%",
                   },
                 ]}
               >
@@ -420,11 +420,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "flex-start",
-    alignItems: "flex-end",
+    alignItems: "stretch",
   },
   modalAnchor: {
     marginTop: 80,
-    marginRight: 12,
+    paddingHorizontal: 12,
+    width: "100%",
   },
   notifPanel: {
     backgroundColor: "#FFFFFF",

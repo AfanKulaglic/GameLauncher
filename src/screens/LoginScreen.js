@@ -17,6 +17,17 @@ import { useResponsive } from "../utils/useResponsive";
 
 const background = require("../../assets/games/battleship.jpg");
 
+function toReadableAuthError(err) {
+  switch (err?.code) {
+    case "auth/email-already-in-use": return "This email is already in use.";
+    case "auth/invalid-email": return "Invalid email address.";
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential": return "Invalid email or password.";
+    default: return err?.message || "An unknown error occurred.";
+  }
+}
+
 export function LoginScreen({ navigation }) {
   const { scale, vScale, hScale } = useResponsive();
   const insets = useSafeAreaInsets();
@@ -32,7 +43,7 @@ export function LoginScreen({ navigation }) {
     try {
       await login({ email, password });
     } catch (err) {
-      setError("Invalid email or password.");
+      setError(toReadableAuthError(err));
     } finally {
       setLoading(false);
     }

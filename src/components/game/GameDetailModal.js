@@ -141,9 +141,11 @@ export function GameDetailModal({ game, visible, onClose }) {
   const navigation = useNavigation();
 
   const [showPartnerPicker, setShowPartnerPicker] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState(null);
+  const [selectedPartners, setSelectedPartners] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sending, setSending] = useState(false);
+
+  const maxPartners = (game?.players ?? 2) - 1; // host counts as 1
 
   if (!game) return null;
 
@@ -163,22 +165,31 @@ export function GameDetailModal({ game, visible, onClose }) {
 
   const handlePlayPress = () => {
     setShowPartnerPicker(true);
-    setSelectedPartner(null);
+    setSelectedPartners([]);
     setSearchQuery("");
     friendsCtx?.searchUsers?.("");
   };
 
   const handleBack = () => {
     setShowPartnerPicker(false);
-    setSelectedPartner(null);
+    setSelectedPartners([]);
     setSearchQuery("");
   };
 
   const handleClose = () => {
     setShowPartnerPicker(false);
-    setSelectedPartner(null);
+    setSelectedPartners([]);
     setSearchQuery("");
     onClose();
+  };
+
+  const togglePartner = (partner) => {
+    setSelectedPartners((prev) => {
+      const exists = prev.find((p) => p.id === partner.id);
+      if (exists) return prev.filter((p) => p.id !== partner.id);
+      if (prev.length >= maxPartners) return prev;
+      return [...prev, partner];
+    });
   };
 
   const handleSearchChange = (text) => {
@@ -263,6 +274,15 @@ export function GameDetailModal({ game, visible, onClose }) {
                   )}
                 </View>
 
+                {/* Selection counter for multi-player */}
+                {maxPartners > 1 && (
+                  <View style={styles.selectionCounter}>
+                    <Text style={styles.selectionCounterText}>
+                      {selectedPartners.length}/{maxPartners} selected
+                    </Text>
+                  </View>
+                )}
+
                 {/* Content area */}
                 <View style={styles.pickerList}>
                   {searchQuery.length >= 2 ? (
@@ -302,8 +322,8 @@ export function GameDetailModal({ game, visible, onClose }) {
                       renderItem={({ item }) => (
                         <PartnerRow
                           item={item}
-                          selected={selectedPartner?.id === item.id}
-                          onSelect={setSelectedPartner}
+                          selected={selectedPartners.some((p) => p.id === item.id)}
+                          onSelect={togglePartner}
                           status={item.status}
                         />
                       )}
@@ -382,16 +402,15 @@ export function GameDetailModal({ game, visible, onClose }) {
                 <Pressable
                   style={({ pressed }) => [
                     styles.primaryBtn,
-                    (!selectedPartner) && styles.btnDisabled,
+                    (selectedPartners.length === 0) && styles.btnDisabled,
                     pressed && { opacity: 0.85 },
                   ]}
                   onPress={async () => {
-                    if (selectedPartner && game && !sending) {
+                    if (selectedPartners.length > 0 && game && !sending) {
                       setSending(true);
                       try {
                         const lobbyId = await friendsCtx?.sendGameInvite?.(
-                          selectedPartner.id,
-                          selectedPartner,
+                          selectedPartners,
                           game
                         );
                         handleClose();
@@ -405,11 +424,17 @@ export function GameDetailModal({ game, visible, onClose }) {
                       }
                     }
                   }}
-                  disabled={!selectedPartner || sending}
+                  disabled={selectedPartners.length === 0 || sending}
                 >
                   <Icon name="play" size={16} color={colors.white} />
                   <Text style={styles.primaryBtnText}>
-                    {sending ? "Sending invite..." : selectedPartner ? `Play with ${selectedPartner.displayName}` : "Select a Partner"}
+                    {sending
+                      ? "Sending invites..."
+                      : selectedPartners.length === 0
+                        ? `Select Partners (0/${maxPartners})`
+                        : selectedPartners.length === 1
+                          ? `Play with ${selectedPartners[0].displayName}`
+                          : `Play with ${selectedPartners.length} friends`}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -426,11 +451,19 @@ export function GameDetailModal({ game, visible, onClose }) {
                   onPress={handlePlayPress}
                 >
                   <Icon name="play" size={16} color={colors.white} />
-                  <Text style={styles.primaryBtnText}>Play with Partner</Text>
+                  <Text style={styles.primaryBtnText}>
+                    {maxPartners > 1 ? `Play with Partners (up to ${maxPartners})` : "Play with Partner"}
+                  </Text>
                 </Pressable>
                 <Pressable
                   style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.85 }]}
-                  onPress={() => {}}
+                  onPress={() => {
+                    handleClose();
+                    navigation.navigate("Partners", {
+                      openDiscover: true,
+                      discoverToken: Date.now(),
+                    });
+                  }}
                 >
                   <Icon name="send" size={14} color={colors.brandRed} />
                   <Text style={styles.secondaryBtnText}>Invite</Text>
@@ -715,6 +748,16 @@ const styles = StyleSheet.create({
   pickerList: {
     flex: 1,
     marginTop: 6,
+  },
+  selectionCounter: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignItems: "center",
+  },
+  selectionCounterText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.brandRed,
   },
   listHeader: {
     fontSize: 10,

@@ -6,18 +6,14 @@ const menuItems = [
   "Achievements",
   "Friends",
   "News",
-  "Recent Posts",
-  "Add-Ons",
-  "Soundtrack",
+  "Game Rules",
   "Guide",
+  "Info",
 ];
 
 export function GameMenu({ onClose, active = "Achievements" }) {
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onClose} style={styles.closeRow}>
-        <Text style={styles.closeText}>Close</Text>
-      </TouchableOpacity>
       {menuItems.map((label) => (
         <View
           key={label}
@@ -39,13 +35,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     gap: 10,
   },
-  closeRow: {
-    marginBottom: 8,
-  },
-  closeText: {
-    color: colors.white,
-    fontWeight: "700",
-  },
   item: {
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -57,5 +46,6 @@ const styles = StyleSheet.create({
   itemText: {
     color: colors.white,
     fontWeight: "600",
+    fontSize: 18,
   },
 });

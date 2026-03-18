@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../utils/colors";
 import { useResponsive } from "../../utils/useResponsive";
 
@@ -7,15 +7,14 @@ const options = [
   "Achievements",
   "Friends",
   "News",
-  "Recent Posts",
-  "Add-Ons",
-  "Soundtrack",
+  "Game Rules",
   "Guide",
+  "Info",
 ];
 
-export function GameFocusOptions({ onClose }) {
+export function GameFocusOptions({ onClose, onOptionPress }) {
   const { scale, vScale } = useResponsive();
-  const textSize = scale(9);
+  const textSize = scale(14);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(8)).current;
 
@@ -37,6 +36,7 @@ export function GameFocusOptions({ onClose }) {
 
   return (
     <Animated.View
+      pointerEvents="box-none"
       style={[
         styles.container,
         {
@@ -50,21 +50,19 @@ export function GameFocusOptions({ onClose }) {
         },
       ]}
     >
-      <TouchableOpacity onPress={onClose} activeOpacity={0.8}>
-        <Text style={[styles.closeText, { fontSize: textSize }]}>Close</Text>
-      </TouchableOpacity>
-      <View style={[styles.list, { gap: vScale(4), paddingHorizontal: scale(8) }]}>
+      <View pointerEvents="box-none" style={[styles.list, { gap: vScale(4), paddingHorizontal: 0 }]}>
         {options.map((option, index) => (
-          <View
+          <Pressable
             key={option}
-            style={[
+            onPress={() => onOptionPress?.(option)}
+            style={({ pressed }) => [
               styles.item,
-              { paddingVertical: vScale(6), paddingHorizontal: scale(8) },
+              { paddingVertical: vScale(6), paddingHorizontal: scale(12), opacity: pressed ? 0.7 : 1 },
               index === 0 ? styles.itemActive : null,
             ]}
           >
             <Text style={[styles.itemText, { fontSize: textSize }]}>{option}</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
     </Animated.View>
@@ -85,21 +83,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
-  closeText: {
-    color: colors.white,
-    fontWeight: "700",
-    fontSize: 10,
-    paddingHorizontal: 14,
-    paddingBottom: 8,
-  },
   list: {
     gap: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
   },
   item: {
-    borderRadius: 12,
+    borderRadius: 0,
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
   },
   itemActive: {
     backgroundColor: colors.brandRedDark,
@@ -107,6 +98,6 @@ const styles = StyleSheet.create({
   itemText: {
     color: colors.white,
     fontWeight: "600",
-    fontSize: 10,
+    fontSize: 16,
   },
 });

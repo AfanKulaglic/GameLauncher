@@ -1,6 +1,8 @@
 const localImages = {
   battleship: require("../../assets/games/battleship.jpg"),
   runbound: require("../../assets/games/Runbound Rivals.jpg"),
+  ludo: require("../../assets/games/Ludo.jpg"),
+  slagalica: require("../../assets/games/slagalica.jpg"),
 };
 
 export const mockGames = [
@@ -53,32 +55,32 @@ export const mockGames = [
   },
   {
     id: "3",
-    title: "Xenoblade Chronicles",
-    coverImage: {
-      uri: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=600&fit=crop",
-    },
-    description: "Discover origins of Shulk and clash against mechanical menace.",
-    genre: ["RPG", "Action"],
+    title: "Slagalica",
+    coverImage: localImages.slagalica,
+    description: "Compete across 6 quiz rounds — letters, numbers, logic, and more!",
+    longDescription:
+      "TV Slagalica is a multi-round competitive quiz game inspired by the legendary Serbian TV show. Two players battle across 6 mini-games: form words from random letters, solve math puzzles, crack Mastermind codes, match connections, answer trivia, and solve association puzzles. Each round awards points, and the final score crowns the winner.",
+    genre: ["Quiz", "Puzzle", "Strategy"],
     players: 2,
     status: "idle",
     achievements: {
-      total: 30,
-      unlocked: 15,
+      total: 16,
+      unlocked: 0,
     },
   },
   {
     id: "4",
-    title: "Animal Crossing: New Horizons",
-    coverImage: {
-      uri: "https://images.unsplash.com/photo-1547638375-8da5e26ca054?w=400&h=600&fit=crop",
-    },
-    description: "Create your island paradise with a friend!",
-    genre: ["Simulation", "Life Sim"],
-    players: 2,
+    title: "Ludo",
+    coverImage: localImages.ludo,
+    description: "Roll the dice and race your tokens home!",
+    longDescription:
+      "A classic board game of strategy and luck. Roll the dice, move your tokens around the board, capture opponents, and be the first to get all four tokens safely home.",
+    genre: ["Board Game", "Strategy"],
+    players: 4,
     status: "idle",
     achievements: {
-      total: 20,
-      unlocked: 5,
+      total: 14,
+      unlocked: 0,
     },
   },
 ];

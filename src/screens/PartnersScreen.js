@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -81,7 +81,7 @@ const chipStyles = StyleSheet.create({
   label: { color: "#64748B", fontSize: 7 },
 });
 
-export function PartnersScreen() {
+export function PartnersScreen({ route, navigation }) {
   const { scale, vScale, hScale } = useResponsive();
   const horizontalPadding = hScale(12);
   const { user } = useAuth();
@@ -113,6 +113,23 @@ export function PartnersScreen() {
       useNativeDriver: true,
     }).start();
   };
+
+  const lastDiscoverTokenRef = useRef(null);
+
+  useEffect(() => {
+    const shouldOpenDiscover = route?.params?.openDiscover;
+    const token = route?.params?.discoverToken;
+    if (!shouldOpenDiscover) return;
+    if (token && lastDiscoverTokenRef.current === token) return;
+
+    if (token) lastDiscoverTokenRef.current = token;
+    switchTab(2);
+
+    navigation.setParams({
+      openDiscover: false,
+      discoverToken: null,
+    });
+  }, [route?.params?.openDiscover, route?.params?.discoverToken]);
 
   // Debounced search for Discover tab
   const handleDiscoverSearch = useCallback(
@@ -215,6 +232,13 @@ export function PartnersScreen() {
               <View style={[styles.friendActions, { marginTop: vScale(8), gap: hScale(6) }]}>
                 <TouchableOpacity
                   style={[styles.actionBtn, styles.actionBtnInvite, { paddingVertical: vScale(6), borderRadius: scale(10) }]}
+                  onPress={() =>
+                    navigation.navigate("Home", {
+                      openGameSelection: true,
+                      invitePartnerId: profile.id,
+                      invitePartnerName: profile.displayName,
+                    })
+                  }
                 >
                   <Text style={[styles.actionBtnInviteText, { fontSize: scale(9) }]}>
                     Invite to game
